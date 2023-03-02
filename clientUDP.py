@@ -3,15 +3,13 @@ import time
 import sys
 from socket import *
 
-if len(sys.argv) != 3:
-    print("Usage: python UDPClient <server IP> <server port no>")
-
 client_socket = socket(AF_INET, SOCK_DGRAM)
 server = ("127.0.0.1", int(12000))
 client_socket.settimeout(1)
 rtt_array = []
+packetNum = 10
 
-for i in range(10):
+for i in range(packetNum):
 
     start_time = time.time()
     host_name = gethostname()
@@ -33,6 +31,10 @@ for i in range(10):
         timeout_msg = "Request timed out"
         print(timeout_msg)
         
-print(max(rtt_array))
-print(min(rtt_array))
-print(sum(rtt_array) / len(rtt_array))
+print("Max RTT: " + str(max(rtt_array)))
+print("Min RTT: " + str(min(rtt_array)))
+print("Average RTT: " + str(sum(rtt_array) / len(rtt_array)))
+
+packetLossPercent = (1 - (len(rtt_array) / packetNum)) * 100
+print(f"Packet loss is {packetLossPercent}%")
+
