@@ -1,40 +1,48 @@
-import random
+import socket
 import time
-import sys
-from socket import *
 
-client_socket = socket(AF_INET, SOCK_DGRAM)
-server = ("127.0.0.1", int(12000))
-client_socket.settimeout(1)
-rtt_array = []
-packetNum = 10
+def main():
+    rtt_array = []
 
-for i in range(packetNum):
+    # Set up client socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_socket.settimeout(1)
 
-    start_time = time.time()
-    host_name = gethostname()
-    server_ip = gethostbyname(host_name)
-    msg = 'PING ' + str(server_ip) + " " + str(i)
+    # Set of server address and port to communicate with
+    server = ("127.0.0.1", 12000)
 
-    try:
-        client_socket.sendto(msg.encode(), server)
-        client_socket.settimeout(1)
+    # Create message to send to server
+    address = socket.gethostbyname(socket.gethostname())
+    ping_msg = 'ping ' + address
 
-        client_socket.recv(1024)
-        end_time = time.time()
-        rtt = (end_time - start_time) * 1000
-        msg += " " + str(format(rtt, '.3f')) + "ms\n"
-        rtt_array.append(rtt)
-        print(msg)
+    # Ping the server multiple times
+    pings = 10
+    for i in range(pings):
+        # Try until there is a timeout error flagged by the socket
+        try:
+            # Send/recieve message to/from server while tracking time difference for each ping
+            client_socket.sendto(ping_msg.encode(), server)
+            start_time = time.time_ns()
+            msg_from_server = client_socket.recvfrom(1024)
+            end_time = time.time_ns()
 
-    except timeout:
-        timeout_msg = "Request timed out"
-        print(timeout_msg)
-        
-print("Max RTT: " + str(max(rtt_array)))
-print("Min RTT: " + str(min(rtt_array)))
-print("Average RTT: " + str(sum(rtt_array) / len(rtt_array)))
+            # Print message recieved from server with RTT
+            rtt = (end_time - start_time)/100000
+            print(f'{msg_from_server[0].decode()}\n{rtt} ms\n')
 
-packetLossPercent = (1 - (len(rtt_array) / packetNum)) * 100
-print(f"Packet loss is {packetLossPercent}%")
+            # Add rtt to rtt array for later statistics
+            rtt_array.append(rtt)
 
+        except socket.timeout:
+            print("Request timed out\n")
+            
+    print(f'Max RTT: {max(rtt_array):>10.2f} ms')
+    print(f'Min RTT: {min(rtt_array):>10.2f} ms')
+    print(f'Average RTT: {sum(rtt_array)/len(rtt_array):>6.2f} ms')
+
+    packetLossPercent = (1 - (len(rtt_array) / pings)) * 100
+    print(f'Packet loss:{packetLossPercent:>8.2f}%')
+
+
+if __name__ == "__main__":
+    main()
