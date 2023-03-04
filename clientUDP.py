@@ -5,7 +5,7 @@ import json
 class Packet:
     def __init__(self, seq_num, timestamp, message):
         self.seq_num = seq_num
-        self.timestamp = timestamp / 100000
+        self.timestamp = timestamp
         self.message = message
 
 def main():
@@ -15,7 +15,7 @@ def main():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.settimeout(1)
 
-    # Set up server address and port to communicate with
+    # Assign server address and port to communicate with
     server = ("127.0.0.1", 12000)
 
     # Create message to send to server
@@ -23,15 +23,16 @@ def main():
     ping_msg = 'ping ' + address
 
     # Ping the server multiple times
-    packets = 15
+    packets = 10
     for i in range(packets):
+        # Initialize Packet object and serialize the object into JSON for sending
         packet = Packet(i,(time.time_ns()/1000000),ping_msg)
         packet = json.dumps(packet, default=vars)
 
         # Try until there is a timeout error flagged by the socket
         try:
 
-            # Send/recieve message to/from server while tracking time difference for each ping
+            # Send/recieve message to/from server while tracking Round Trip Time for each ping
             client_socket.sendto(packet.encode(), server)
             start_time = time.time_ns()
             msg_from_server = client_socket.recvfrom(1024)

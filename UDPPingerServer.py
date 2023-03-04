@@ -6,6 +6,7 @@ import json
 import time
 import threading
 
+# What a packet data structure looks like
 # {'seq_num': 0, 'timestamp': 16778718072989.03, 'message': 'ping 10.0.0.246'}
 class packetHandler:
     def __init__(self):
@@ -14,6 +15,7 @@ class packetHandler:
         self.last_seq = -1
         self.heartbeat = None
 
+    # Update heartbeat with info on the last packet recieved
     def updateHb(self, new_packet):
         self.packet_dict = new_packet
         self.last_time = time.time_ns()/1000000
@@ -24,16 +26,16 @@ class packetHandler:
             print("Packet missing")
         self.last_seq = new_packet.get('seq_num')
     
+    # Heartbeat thread will let server no that no data is being recieved after
+    # nine seconds
     def heartbeatRunner(self):
         while True:
+            # Wait 5 seconds before reporting
             time.sleep(5)
+
             time_since_last_packet = (time.time_ns()/1000000) - (self.last_time)
             if time_since_last_packet > 9000:
-                print("Timeout: no longer recieving packets")
-
-
-
-
+                print("Heartbeat: no longer recieving packets")
 
 
 def main():
@@ -50,23 +52,27 @@ def main():
     print("Server listening on port 12000")
 
     while True:
-        # Receive the client packet along with the address it is coming from
-        current_packet, address = serverSocket.recvfrom(1024)
-        current_packet = json.loads(current_packet)
+        try:
+            # Receive the client packet along with the address it is coming from
+            current_packet, address = serverSocket.recvfrom(1024)
+            # Load JSON object packet as a dictionary
+            current_packet = json.loads(current_packet)
 
-        # Update values for heartbeat calculations
-        pHandler.updateHb(current_packet)
+            # Update values for heartbeat calculations after packet is recieved
+            pHandler.updateHb(current_packet)
 
-        # Capitalize the message from the client
-        message = current_packet.get('message').upper().encode()
+            # Capitalize the message from the client
+            message = current_packet.get('message').upper().encode()
 
-        # Generate random number in the range of 0 to 10
-        rand = random.randint(0, 10)
-        # if rand is less than 4, we consider the packet lost and do not respond
-        if rand < 4:
-            continue
-        # otherwise, the server responds
-        serverSocket.sendto(message,address)
+            # Generate random number in the range of 0 to 10
+            rand = random.randint(0, 10)
+            # if rand is less than 4, we consider the packet lost and do not respond
+            if rand < 4:
+                continue
+            # otherwise, the server responds
+            serverSocket.sendto(message,address)
+        except KeyboardInterrupt:
+            break
 
 if __name__ == "__main__":
     main()
