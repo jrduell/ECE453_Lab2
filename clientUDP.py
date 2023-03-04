@@ -23,7 +23,7 @@ def main():
     ping_msg = 'ping ' + address
 
     # Ping the server multiple times
-    packets = 10
+    packets = 3
     for i in range(packets):
         # Initialize Packet object and serialize the object into JSON for sending
         packet = Packet(i,(time.time_ns()/1000000),ping_msg)
@@ -49,12 +49,15 @@ def main():
             print("Request timed out\n")
 
     # Calculate and print statistics
-    print(f'Max RTT: {max(rtt_array):>10.2f} ms')
-    print(f'Min RTT: {min(rtt_array):>10.2f} ms')
-    print(f'Average RTT: {sum(rtt_array)/len(rtt_array):>6.2f} ms')
+    if len(rtt_array) > 0:
+        print(f'Max RTT: {max(rtt_array):>10.2f} ms')
+        print(f'Min RTT: {min(rtt_array):>10.2f} ms')
+        print(f'Average RTT: {sum(rtt_array)/len(rtt_array):>6.2f} ms')
 
-    packetLossPercent = (1 - (len(rtt_array) / packets)) * 100
-    print(f'Packet loss:{packetLossPercent:>8.2f}%')
+        packetLossPercent = (1 - (len(rtt_array) / packets)) * 100
+        print(f'Packet loss:{packetLossPercent:>8.2f}%')
+    else:
+        print("No succesful connections")
 
 
 if __name__ == "__main__":
